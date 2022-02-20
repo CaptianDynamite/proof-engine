@@ -1,0 +1,10 @@
+setlist = "{" [ atomic *("," atomic) ] "}"
+
+brackets   = "(" exponents ")"
+exponents  = muldiv "^" brackets
+muldiv     = addsub ( "*" / "/" ) brackets
+addsub     = atomic ( "+" / "-" ) brackets
+
+atomic   = variable / number / brackets / ("-" atomic)
+variable = ALPHA
+number   = *1DIGIT
