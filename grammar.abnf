@@ -1,9 +1,16 @@
-setlist = "{" [ atomic *("," atomic) ] "}"
+setbuilder = "{" vardec "|" condition *("," atomic) "}"
+setlist    = "{" [ atomic *("," atomic) ] "}"
+
+vardec = variable [ "in" variable ]
+
+condition = subsetin / expr
+subsetin  = variable ("in" / "subset" / "subseteq") variable
+expr      = variable ( "=" / "!=" / "<" / ">" / ">=" / "<=") atomic
 
 brackets   = "(" exponents ")"
-exponents  = muldiv "^" brackets
-muldiv     = addsub ( "*" / "/" ) brackets
-addsub     = atomic ( "+" / "-" ) brackets
+exponents  = muldiv "^" atomic
+muldiv     = addsub ( "*" / "/" ) atomic
+addsub     = atomic ( "+" / "-" ) atomic
 
 atomic   = variable / number / brackets / ("-" atomic)
 variable = ALPHA
