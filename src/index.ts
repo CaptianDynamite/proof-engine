@@ -9,11 +9,40 @@ const isNumerical = (char: string): boolean => {
     return 48 <= codePoint && codePoint <= 57
 }
 
+enum TokenType {
+    LeftBrace, RightBrace,
+    VBar,
+    Equals, LessThan, GreaterThan,
+    NotEqual, GreaterThanEqual, LessThanEqual,
+    LeftBracket, RightBracket,
+    Exponent,
+    Multiply, Divide,
+    Add, Subtract,
+    Variable, Natural,
+    Comma,
+
+    In, Subset, SubsetEq
+}
+
 class Tokenizer {
 
     private readonly source: string
     private stringIndex: number
     private peekIndex: number
+
+    private static readonly multiChars: Map<string, TokenType> =
+        new Map([
+            ['in', TokenType.In],
+            ['subset', TokenType.Subset],
+            ['subseteq', TokenType.SubsetEq],
+            ['!=', TokenType.NotEqual],
+            ['>=', TokenType.GreaterThanEqual],
+            ['<=', TokenType.LessThanEqual]
+        ])
+    private static readonly delimiters: string[] = [
+        ' ', '\n'
+    ]
+
 
     constructor(source: string) {
         this.source = source.trim()
@@ -22,13 +51,28 @@ class Tokenizer {
     }
 
     nextToken(): Token {
+        //We need to skip the whitespace at the current index if there is any
+        this.skipWhiteSpace()
         let result = this.parseSingleChar()
         if (result !== undefined) return result
         result = this.parseVariable()
         if (result !== undefined) return result
         result = this.parseInteger()
         if (result !== undefined) return result
+        result = this.parseMultiChar()
+        if (result !== undefined) return result
         throw Error(`Error lexing at ${this.stringIndex}`)
+    }
+
+    skipWhiteSpace(): void {
+        let next = this.peekChar()
+        while(next === ' ' || next === '\n') {
+            next = this.peekChar()
+        }
+        // This has to be done since the above line includes the first non-whitespace
+        // character after source.charAt(stringIndex)
+        this.unpeekChar()
+        this.advanceIndex()
     }
 
     parseSingleChar(): (Token | undefined) {
@@ -36,6 +80,10 @@ class Tokenizer {
         switch(char) {
             case '{': return this.tokenFound(TokenType.LeftBrace)
             case '}': return this.tokenFound(TokenType.RightBrace)
+            case '|': return this.tokenFound(TokenType.VBar)
+            case '=': return this.tokenFound(TokenType.Equals)
+            case '<': return this.tokenFound(TokenType.LessThan)
+            case '>': return this.tokenFound(TokenType.GreaterThan)
             case '(': return this.tokenFound(TokenType.LeftBracket)
             case ')': return this.tokenFound(TokenType.RightBracket)
             case '^': return this.tokenFound(TokenType.Exponent)
@@ -46,6 +94,19 @@ class Tokenizer {
             case ',': return this.tokenFound(TokenType.Comma)
             default: return this.tokenNotFound()
         }
+    }
+
+    parseMultiChar(): (Token | undefined) {
+        let length = 0
+        while (!(this.peekChar() in Tokenizer.delimiters)) length++
+        // This has to be done since the above line includes the non-matching
+        // character in the peeked token
+        this.unpeekChar()
+        const tokenString = this.source.substring(this.stringIndex, this.peekIndex)
+        if (length > 0 && Tokenizer.multiChars.has(tokenString)) {
+            // @ts-ignore we can safely ignore the conditional guarantees that tokenString is in multichars
+            return this.tokenFound(Tokenizer.multiChars.get(tokenString))
+        } else return this.tokenNotFound();
     }
 
     parseVariable(): (Token | undefined) {
@@ -76,11 +137,15 @@ class Tokenizer {
         this.peekIndex--
     }
 
+    advanceIndex(): void {
+        this.stringIndex = this.peekIndex
+    }
+
     tokenFound(type: TokenType): Token {
         const index = this.stringIndex;
         const length = this.peekIndex - this.stringIndex
         const sourceString = this.source.substring(this.stringIndex, this.peekIndex)
-        this.stringIndex = this.peekIndex
+        this.advanceIndex()
         return new Token(type, sourceString, index, length)
     }
 
@@ -106,20 +171,11 @@ class Token {
 
 }
 
-enum TokenType {
-    LeftBrace, RightBrace,
-    LeftBracket, RightBracket,
-    Exponent,
-    Multiply, Divide,
-    Add, Subtract,
-    Variable, Natural,
-    Comma
-}
+import chalk from 'chalk';
 
-let tokens = new Tokenizer('(abcd+1234)')
-console.log('(abcd+1234)')
-for (let i = 0; i < 5; i++) console.log(tokens.nextToken().toString())
-console.log("--------------------------------------")
-tokens = new Tokenizer('{a,b,1,23232,(a+b-12)^(123^21))}')
-console.log('{a,b,1,23232,(a+b-12)^(123^21))}')
-for (let i = 0; i < 24; i++) console.log(tokens.nextToken().toString())
+const source = '{a in R | a > 0, a < 10}'
+const tokenizer = new Tokenizer(source)
+console.log(chalk.green(source))
+for (let i = 0; i < 13; i++) {
+    console.log(tokenizer.nextToken().toString())
+}
