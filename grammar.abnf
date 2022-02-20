@@ -1,7 +1,9 @@
+statement = condition
+
 setbuilder = "{" vardec "|" condition *("," atomic) "}"
 setlist    = "{" [ atomic *("," atomic) ] "}"
 
-vardec = variable [ "in" variable ]
+vardec = variable [ "in" set ]
 
 condition = subsetin / expr
 subsetin  = variable ("in" / "subset" / "subseteq") variable
@@ -12,6 +14,10 @@ exponents  = muldiv "^" atomic
 muldiv     = addsub ( "*" / "/" ) atomic
 addsub     = atomic ( "+" / "-" ) atomic
 
-atomic   = variable / number / brackets / ("-" atomic)
+atomic   = variable / number / brackets / ("-" atomic) / set
+set      = setbuilder / setlist / variable
 variable = ALPHA
 number   = *1DIGIT
+
+quantifier = "exists" / "forall"
+implies    = "implies"
