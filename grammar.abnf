@@ -1,23 +1,22 @@
 statement = condition
 
-setbuilder = "{" vardec "|" condition *("," atomic) "}"
+setbuilder = "{" symdec "|" condition *("," (expr / symdec)) "}"
 setlist    = "{" [ atomic *("," atomic) ] "}"
 
-vardec = variable [ "in" set ]
+symdec = symbol [ "in" set ]
 
 condition = subsetin / expr
-subsetin  = variable ("in" / "subset" / "subseteq") variable
-expr      = variable ( "=" / "!=" / "<" / ">" / ">=" / "<=") atomic
+subsetin  = symbol ("in" / "subset" / "subseteq") symbol
+expr      = brackets [( "=" / "!=" / "<" / ">" / ">=" / "<=") atomic]
 
-brackets   = "(" exponents ")"
-exponents  = muldiv "^" atomic
-muldiv     = addsub ( "*" / "/" ) atomic
-addsub     = atomic ( "+" / "-" ) atomic
+brackets   = ("(" exponents ")") / exponents
+exponents  = muldiv ["^" atomic]
+muldiv     = addsub [( "*" / "/" ) atomic]
+addsub     = atomic [( "+" / "-" ) atomic]
 
-atomic   = variable / number / brackets / ("-" atomic) / set
-set      = setbuilder / setlist / variable
-variable = ALPHA
-number   = *1DIGIT
+atomic   = symbol / brackets / ("-" atomic) / set
+set      = setbuilder / setlist / symbol
+symbol = *1(ALPHA / DIGIT)
 
 quantifier = "exists" / "forall"
 implies    = "implies"

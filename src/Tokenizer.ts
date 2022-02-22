@@ -1,10 +1,12 @@
 const isAlphabetical = (char: string): boolean => {
-    if (char.length !== 1) throw new Error('Argument "char" must have a length of 1');
+    if (char.length > 1) throw new Error('Argument "char" must have a length of 1')
+    else if (char.length === 0) return false
     const lowerCaseCodePoint = char.charCodeAt(0) | 32
     return 97 <= lowerCaseCodePoint && lowerCaseCodePoint <= 122
 }
 const isNumerical = (char: string): boolean => {
-    if (char.length !== 1) throw new Error('Argument "char" must have a length of 1')
+    if (char.length > 1) throw new Error('Argument "char" must have a length of 1')
+    else if (char.length === 0) return false
     const codePoint = char.charCodeAt(0)
     return 48 <= codePoint && codePoint <= 57
 }
@@ -12,16 +14,18 @@ const isNumerical = (char: string): boolean => {
 enum TokenType {
     LeftBrace, RightBrace,
     VBar,
+    SetDifference,
     Equals, LessThan, GreaterThan,
     NotEqual, GreaterThanEqual, LessThanEqual,
     LeftBracket, RightBracket,
     Exponent,
     Multiply, Divide,
     Add, Subtract,
-    Variable, Natural,
-    Comma,
+    Symbol,
+    Comma, Colon,
+    In, Subset, SubsetEq,
 
-    In, Subset, SubsetEq
+    End
 }
 
 class Tokenizer {
@@ -53,11 +57,10 @@ class Tokenizer {
     nextToken(): Token {
         //We need to skip the whitespace at the current index if there is any
         this.skipWhiteSpace()
+        if (this.stringIndex === this.source.length) return this.tokenFound(TokenType.End)
         let result = this.parseSingleChar()
         if (result !== undefined) return result
-        result = this.parseVariable()
-        if (result !== undefined) return result
-        result = this.parseInteger()
+        result = this.parseSymbol()
         if (result !== undefined) return result
         result = this.parseMultiChar()
         if (result !== undefined) return result
@@ -81,6 +84,7 @@ class Tokenizer {
             case '{': return this.tokenFound(TokenType.LeftBrace)
             case '}': return this.tokenFound(TokenType.RightBrace)
             case '|': return this.tokenFound(TokenType.VBar)
+            case '\\': return this.tokenFound(TokenType.SetDifference)
             case '=': return this.tokenFound(TokenType.Equals)
             case '<': return this.tokenFound(TokenType.LessThan)
             case '>': return this.tokenFound(TokenType.GreaterThan)
@@ -92,6 +96,7 @@ class Tokenizer {
             case '+': return this.tokenFound(TokenType.Add)
             case '-': return this.tokenFound(TokenType.Subtract)
             case ',': return this.tokenFound(TokenType.Comma)
+            case ':': return this.tokenFound(TokenType.Colon)
             default: return this.tokenNotFound()
         }
     }
@@ -109,23 +114,17 @@ class Tokenizer {
         } else return this.tokenNotFound();
     }
 
-    parseVariable(): (Token | undefined) {
+    parseSymbol(): (Token | undefined) {
         let length = 0
-        while (isAlphabetical(this.peekChar())) length++
-        // This has to be done since the above line includes the non-matching
-        // character in the peeked token
+        let char = this.peekChar()
+        while (isAlphabetical(char) || isNumerical(char)) {
+            length++
+            char = this.peekChar()
+        }
+        // This has to be done since we consistently over count by one, since equality is checked
+        // on the following iteration
         this.unpeekChar()
-        if (length > 0) return this.tokenFound(TokenType.Variable)
-        else return this.tokenNotFound()
-    }
-
-    parseInteger(): (Token | undefined) {
-        let length = 0
-        while (isNumerical(this.peekChar())) length++
-        // This has to be done since the above line includes the non-matching
-        // character in the peeked token
-        this.unpeekChar()
-        if (length > 0) return this.tokenFound(TokenType.Natural)
+        if (length > 0) return this.tokenFound(TokenType.Symbol)
         else return this.tokenNotFound()
     }
 
