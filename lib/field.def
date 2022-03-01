@@ -1,14 +1,15 @@
-def field:
-    let F be a set
-    let +: F prod F -> F
-    let *: F prod F -> F
-    such that forall a, b, c
-    1) (a + b) + c = a + (a + b)
-    2) a + b = b + a
-    3) exists 0 in F such that forall a in F, a + 0 = 0 + a = a
-    4) exists -a in F such that a + (-a) = (-a) + a = 0
-    5) (a * b) * c = a * (b * c)
-    6) a * b = b * a
-    7) exists 1 in F such that forall a in F, 1 * a = a * 1 = a
-    8) forall a in F \ {0}, exists a^(-1) such that a * a^(-1) = a^(-1) * a = 1
-    9) a * (b + c) = a * b + a * c
+def field
+    where
+        F: set,
+        +: F prod F -> F,
+        *: F prod F -> F
+    forall a, b, c in F
+        (a + b) + c = a + (b + c),
+        a + b = b + a,
+        exists 0 in F st forall a in F then a + 0 = 0 + a = a,
+        exists -a in F st -a + a = -a + a = 0,
+        (a * b) * c = a * (b * c),
+        a * b = b * a,
+        exists 1 in F st forall a in F then 1 * a = a * 1 = 1,
+        forall a in F \ {0} then exists a^(-1) st a * a^(-1) = a^(-1) * a = 1,
+        a * (b + c) = a * b + a * c
