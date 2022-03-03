@@ -6,15 +6,22 @@ property    = [variables] statement
 
 constraint    = symbol ":" type
 type          = symbol / function_type
-function_type = set_expression "->" set_expression
+function_type = set "->" set
 
 variables    = *1(variable)
 variable     = universal / existence
-universal    = "forall" symbol_list "in" set_expression "then"
-existence    = "exist" symbol_list "in" set_expression "st"
+universal    = "forall" symbol_list relation set
+existence    = "exist" symbol_list relation set
 symbol_list  = symbol *("," symbol)
+
+relation = "in" / "subset" / "subseteq"
 
 statement  = *1(symbol)
 symbol     = *1(ALPHA / DIGIT / "+" / "-" / "*" / "/" / "^" / "_")
 
-set_expression =
+set            = set_expression
+set_expression = set_atomic *(set_operations set_expression)
+set_atomic     = "emptyset" / symbol / set_literal / set_builder / ( "(" set_expression ")" )
+set_operations = "union" / "intersect" / "difference" / "\\"
+set_literal    = "{" [ expression *("," expression) ] "}"
+set_builder    =
