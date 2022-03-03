@@ -3,7 +3,7 @@ def field
         F: set,
         +: F prod F -> F,
         *: F prod F -> F
-    forall a, b, c in F
+    forall a, b, c in F,
         (a + b) + c = a + (b + c),
         a + b = b + a,
         exists 0 in F st forall a in F then a + 0 = 0 + a = a,

@@ -1,22 +1,20 @@
-statement = condition
+definition  = name constraints [variables ","] properties
+name        = "def" symbol
+constraints = "where" constraint *("," constraint)
+properties  = statement *("," statement)
+property    = [variables] statement
 
-setbuilder = "{" symdec "|" condition *("," (expr / symdec)) "}"
-setlist    = "{" [ atomic *("," atomic) ] "}"
+constraint    = symbol ":" type
+type          = symbol / function_type
+function_type = set_expression "->" set_expression
 
-symdec = symbol [ "in" set ]
+variables    = *1(variable)
+variable     = universal / existence
+universal    = "forall" symbol_list "in" set_expression "then"
+existence    = "exist" symbol_list "in" set_expression "st"
+symbol_list  = symbol *("," symbol)
 
-condition = subsetin / expr
-subsetin  = symbol ("in" / "subset" / "subseteq") symbol
-expr      = brackets [( "=" / "!=" / "<" / ">" / ">=" / "<=") atomic]
+statement  = *1(symbol)
+symbol     = *1(ALPHA / DIGIT / "+" / "-" / "*" / "/" / "^" / "_")
 
-brackets   = ("(" exponents ")") / exponents
-exponents  = muldiv ["^" atomic]
-muldiv     = addsub [( "*" / "/" ) atomic]
-addsub     = atomic [( "+" / "-" ) atomic]
-
-atomic   = symbol / brackets / ("-" atomic) / set
-set      = setbuilder / setlist / symbol
-symbol = *1(ALPHA / DIGIT)
-
-quantifier = "exists" / "forall"
-implies    = "implies"
+set_expression =
