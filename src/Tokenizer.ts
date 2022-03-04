@@ -10,22 +10,30 @@ const isNumerical = (char: string): boolean => {
     const codePoint = char.charCodeAt(0)
     return 48 <= codePoint && codePoint <= 57
 }
+const isOtherValidSymbol = (char: string): boolean => {
+    if (char.length > 1) throw new Error('Argument "char" must have a length of 1')
+    else if (char.length === 0) return false
+    return (
+        char === '+' || char === '-'
+        || char === '*' || char === '/'
+        || char === '^' || char === '_'
+        || char === '='
+    )
+}
 
 enum TokenType {
-    LeftBrace, RightBrace,
-    VBar,
-    SetDifference,
-    Equals, LessThan, GreaterThan,
-    NotEqual, GreaterThanEqual, LessThanEqual,
-    LeftBracket, RightBracket,
-    Exponent,
-    Multiply, Divide,
-    Add, Subtract,
-    Symbol,
-    Comma, Colon,
-    In, Subset, SubsetEq,
+    KW_DEF, KW_WHERE,
+    KW_FORALL, KW_EXIST,
+    KW_EMPTYSET,
+    KW_IN, KW_SUBSET, KW_SUBSETEQ,
+    KW_UNION, KW_INTERSECT,
 
-    End
+    SYM_COMMA, SYM_COLON, SYM_RIGHT_ARROW, SYM_SLASH, SYM_VBAR,
+    SYM_LPAREN, SYM_RPAREN, SYM_LBRACE, SYM_RBRACE,
+
+    SYMBOL,
+
+    END_STREAM
 }
 
 class Tokenizer {
@@ -36,15 +44,20 @@ class Tokenizer {
 
     private static readonly multiChars: Map<string, TokenType> =
         new Map([
-            ['in', TokenType.In],
-            ['subset', TokenType.Subset],
-            ['subseteq', TokenType.SubsetEq],
-            ['!=', TokenType.NotEqual],
-            ['>=', TokenType.GreaterThanEqual],
-            ['<=', TokenType.LessThanEqual]
+            ['def', TokenType.KW_DEF],
+            ['where', TokenType.KW_WHERE],
+            ['forall', TokenType.KW_FORALL],
+            ['exist', TokenType.KW_EXIST],
+            ['emptyset', TokenType.KW_EMPTYSET],
+            ['in', TokenType.KW_IN],
+            ['subset', TokenType.KW_SUBSET],
+            ['subseteq', TokenType.KW_SUBSETEQ],
+            ['union', TokenType.KW_UNION],
+            ['intersect', TokenType.KW_INTERSECT],
+            ['->', TokenType.SYM_RIGHT_ARROW]
         ])
     private static readonly delimiters: string[] = [
-        ' ', '\n'
+        ' ', '\n', '\t', ''
     ]
 
 
@@ -57,12 +70,12 @@ class Tokenizer {
     nextToken(): Token {
         //We need to skip the whitespace at the current index if there is any
         this.skipWhiteSpace()
-        if (this.stringIndex === this.source.length) return this.tokenFound(TokenType.End)
+        if (this.stringIndex === this.source.length) return this.tokenFound(TokenType.END_STREAM)
         let result = this.parseSingleChar()
         if (result !== undefined) return result
-        result = this.parseSymbol()
-        if (result !== undefined) return result
         result = this.parseMultiChar()
+        if (result !== undefined) return result
+        result = this.parseSymbol()
         if (result !== undefined) return result
         throw Error(`Error lexing at ${this.stringIndex}`)
     }
@@ -81,35 +94,27 @@ class Tokenizer {
     parseSingleChar(): (Token | undefined) {
         const char = this.peekChar()
         switch(char) {
-            case '{': return this.tokenFound(TokenType.LeftBrace)
-            case '}': return this.tokenFound(TokenType.RightBrace)
-            case '|': return this.tokenFound(TokenType.VBar)
-            case '\\': return this.tokenFound(TokenType.SetDifference)
-            case '=': return this.tokenFound(TokenType.Equals)
-            case '<': return this.tokenFound(TokenType.LessThan)
-            case '>': return this.tokenFound(TokenType.GreaterThan)
-            case '(': return this.tokenFound(TokenType.LeftBracket)
-            case ')': return this.tokenFound(TokenType.RightBracket)
-            case '^': return this.tokenFound(TokenType.Exponent)
-            case '*': return this.tokenFound(TokenType.Multiply)
-            case '/': return this.tokenFound(TokenType.Divide)
-            case '+': return this.tokenFound(TokenType.Add)
-            case '-': return this.tokenFound(TokenType.Subtract)
-            case ',': return this.tokenFound(TokenType.Comma)
-            case ':': return this.tokenFound(TokenType.Colon)
+            case '{': return this.tokenFound(TokenType.SYM_LBRACE)
+            case '}': return this.tokenFound(TokenType.SYM_RBRACE)
+            case '|': return this.tokenFound(TokenType.SYM_VBAR)
+            case '\\': return this.tokenFound(TokenType.SYM_SLASH)
+            case '(': return this.tokenFound(TokenType.SYM_LPAREN)
+            case ')': return this.tokenFound(TokenType.SYM_RPAREN)
+            case ',': return this.tokenFound(TokenType.SYM_COMMA)
+            case ':': return this.tokenFound(TokenType.SYM_COLON)
             default: return this.tokenNotFound()
         }
     }
 
     parseMultiChar(): (Token | undefined) {
         let length = 0
-        while (!(this.peekChar() in Tokenizer.delimiters)) length++
+        while (!(Tokenizer.delimiters.includes(this.peekChar()))) length++
         // This has to be done since the above line includes the non-matching
         // character in the peeked token
         this.unpeekChar()
         const tokenString = this.source.substring(this.stringIndex, this.peekIndex)
         if (length > 0 && Tokenizer.multiChars.has(tokenString)) {
-            // @ts-ignore we can safely ignore the conditional guarantees that tokenString is in multichars
+            // @ts-ignore we can safely ignore since the conditional guarantees that tokenString is in multichars
             return this.tokenFound(Tokenizer.multiChars.get(tokenString))
         } else return this.tokenNotFound();
     }
@@ -117,19 +122,19 @@ class Tokenizer {
     parseSymbol(): (Token | undefined) {
         let length = 0
         let char = this.peekChar()
-        while (isAlphabetical(char) || isNumerical(char)) {
+        while (isAlphabetical(char) || isNumerical(char) || isOtherValidSymbol(char)) {
             length++
             char = this.peekChar()
         }
         // This has to be done since we consistently over count by one, since equality is checked
         // on the following iteration
         this.unpeekChar()
-        if (length > 0) return this.tokenFound(TokenType.Symbol)
+        if (length > 0) return this.tokenFound(TokenType.SYMBOL)
         else return this.tokenNotFound()
     }
 
     peekChar(): string {
-        return this.source.charAt(this.peekIndex++)
+        return (this.source.charAt(this.peekIndex++) ?? '')
     }
 
     unpeekChar() {
