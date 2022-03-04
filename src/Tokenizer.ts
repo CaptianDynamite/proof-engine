@@ -36,7 +36,7 @@ enum TokenType {
     END_STREAM
 }
 
-class Tokenizer {
+class Tokenizer implements Iterable<Token> {
 
     private readonly source: string
     private stringIndex: number
@@ -65,6 +65,19 @@ class Tokenizer {
         this.source = source.trim()
         this.stringIndex = 0
         this.peekIndex = 0
+    }
+
+    [Symbol.iterator](): Iterator<Token> {
+        return {
+            next: (): IteratorResult<Token> => {
+                const token = this.nextToken()
+                if (token.type === TokenType.END_STREAM) {
+                    return { value: token, done: true }
+                } else {
+                    return { value: token, done: false }
+                }
+            }
+        }
     }
 
     nextToken(): Token {

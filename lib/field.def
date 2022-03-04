@@ -6,10 +6,10 @@ def field
     forall a, b, c in F,
         (a + b) + c = a + (b + c),
         a + b = b + a,
-        exists 0 in F forall a in F a + 0 = 0 + a = a,
+        exists 0 in F forall a in F     a + 0 = 0 + a = a,
         exists -a in F -a + a = -a + a = 0,
         (a * b) * c = a * (b * c),
         a * b = b * a,
-        exists 1 in F forall a in F 1 * a = a * 1 = 1,
-        forall a in F \ {0} exists a^(-1) a * a^(-1) = a^(-1) * a = 1,
-        a * (b + c) = a * b + a * c
+        exists 1 in F forall a in F     1 * a = a * 1 = 1,
+        forall a in F \ {0} exists a^-1     a * a^-1 = a^-1 * a = 1,
+        a * (b + c) = (a * b) + (a * c)
