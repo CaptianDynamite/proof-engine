@@ -1,15 +1,15 @@
-def field
-    where
-        F: set,
-        +: F prod F -> F,
-        *: F prod F -> F
-    forall a, b, c in F,
-        +(+(a, b), c) = +(a, +(b, c)),
-        +(a, b) = +(b, a),
-        exists 0 in F forall a in F     +(a, 0) = +(0, a) = a,
-        exists -a in F +(-a, a) = +(a, -a) = 0,
-        *( *(a, b), c) = *(a, *(b, c)),
-        *(a, b) =*(b, a),
-        exists 1 in F forall a in F     *(1, a) = *(a, 1) = 1,
-        forall a in F \ {0} exists a^-1     *(a, a^-1) = *(a^-1, a) = 1,
-        *(a, +(b, c)) = +(*(a, b), *(a, c))
+def type[field]:
+    forall F type[set](F)
+    forall + type[F prod F -> F](+)
+    forall * type[F prod F -> F](*)
+    forall a in(F, a) forall b in(F, b) forall c in(F, c)
+        +(+(a, b), c) = +(a, +(b, c))
+        and +(a, b) = +(b, a)
+        and exists 0 in(F, 0) forall a in(F, a) +(a, 0) = +(0, a) = a
+        and exists -a in(F, -a) +(-a, a) = +(a, -a) = 0
+        and *( *(a, b), c) = *(a, *(b, c))
+        and *(a, b) = *(b, a)
+        and exists 1 in(F, 1) forall a in(F, a) *(1, a) = *(a, 1) = 1
+        and forall a in(\(F, {0}), a) exists a^-1 in(\(F, {0}), a^-1) *(a, a^-1) = *(a^-1, a) = 1
+        and *(a, +(b, c)) = +(*(a, b), *(a, c))
+        => type[field]((F, +, *))

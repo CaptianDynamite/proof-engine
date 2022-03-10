@@ -1,31 +1,27 @@
-definition  = name constraints [variables ","] properties
-name        = "def" symbol
-constraints = "where" constraint *("," constraint)
-properties  = statement *("," statement)
-property    = [variables] statement
+document = formula
 
-constraint    = symbol ":" type
-type          = symbol / function_type
-function_type = set "->" set
+type          = type[ .* ]
 
-variables    = *1(variable)
-variable     = universal / existence
-universal    = "forall" symbol_list relation set
-existence    = "exist" symbol_list relation set
-symbol_list  = symbol *("," symbol)
-relation     = "in" / "subset" / "subseteq"
+formula           = predicate
+                    / equality
+                    / negation
+                    / binary_connective
+                    / quantifier formula
+                    / "(" formula ")"
+negation          = "!" formula
+quantifier        = "forall" / "exist"
+binary_connective = andor / (then / if)
+andor             = formula ("and" / "or") formula
+then              = formula "=>" formula
+iff               = formula "<=>" formula
 
-statement  = *1(symbol)
-symbol     = *1(ALPHA / DIGIT / "+" / "-" / "*" / "/" / "^" / "_" / "=" )
+term       = variable / function
 
-function            = symbol "(" symbol_list ")"
-first_order_symbols = "and" / "or" / "implies" / "iff" / "not"
+equality   = term "=" term
 
-set            = set_expression
-set_expression = set_atomic *(set_operations set_expression)
-set_atomic     = "emptyset" / symbol / set_literal / set_builder / ( "(" set_expression ")" )
-set_operations = "union" / "intersect" / "\\"
-set_literal    = "{" [ expression *("," expression) ] "}"
-set_builder    = "{" symbol relation set "|" statement "}"
+variable   = symbol
+function   = symbol "(" term_list ")"
+predicate  = (symbol / type) "(" term_list ")"
+term_list  = term *("," term)
 
-//TODO add first order logic support
+symbol     = *1(ALPHA / DIGIT / "+" / "-" / "*" / "/" / "^" / "_")
