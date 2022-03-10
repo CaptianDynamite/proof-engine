@@ -1,4 +1,6 @@
-document = formula
+document = formula / definition
+definition = def type formula
+
 
 type          = type[ .* ]
 
