@@ -17,21 +17,20 @@ const isOtherValidSymbol = (char: string): boolean => {
         char === '+' || char === '-'
         || char === '*' || char === '/'
         || char === '^' || char === '_'
-        || char === '='
+        || char === '\\'
     )
 }
 
 enum TokenType {
-    KW_DEF, KW_WHERE,
-    KW_FORALL, KW_EXIST,
-    KW_EMPTYSET,
-    KW_IN, KW_SUBSET, KW_SUBSETEQ,
-    KW_UNION, KW_INTERSECT,
+    KW_DEF,
+    KW_FORALL, KW_EXISTS,
+    KW_AND, KW_OR,
 
-    SYM_COMMA, SYM_COLON, SYM_RIGHT_ARROW, SYM_SLASH, SYM_VBAR,
+    SYM_COMMA, SYM_RIGHT_ARROW, SYM_BIDIRECTIONAL_ARROW,
     SYM_LPAREN, SYM_RPAREN, SYM_LBRACE, SYM_RBRACE,
+    SYM_NOT, SYM_EQUALS,
 
-    SYMBOL,
+    SYMBOL, TYPE,
 
     END_STREAM
 }
@@ -45,16 +44,12 @@ class Tokenizer implements Iterable<Token> {
     private static readonly multiChars: Map<string, TokenType> =
         new Map([
             ['def', TokenType.KW_DEF],
-            ['where', TokenType.KW_WHERE],
             ['forall', TokenType.KW_FORALL],
-            ['exist', TokenType.KW_EXIST],
-            ['emptyset', TokenType.KW_EMPTYSET],
-            ['in', TokenType.KW_IN],
-            ['subset', TokenType.KW_SUBSET],
-            ['subseteq', TokenType.KW_SUBSETEQ],
-            ['union', TokenType.KW_UNION],
-            ['intersect', TokenType.KW_INTERSECT],
-            ['->', TokenType.SYM_RIGHT_ARROW]
+            ['exists', TokenType.KW_EXISTS],
+            ['and', TokenType.KW_AND],
+            ['or', TokenType.KW_OR],
+            ['=>', TokenType.SYM_RIGHT_ARROW],
+            ['<=>', TokenType.SYM_BIDIRECTIONAL_ARROW]
         ])
     private static readonly delimiters: string[] = [
         ' ', '\n', '\t', ''
@@ -88,6 +83,8 @@ class Tokenizer implements Iterable<Token> {
         if (result !== undefined) return result
         result = this.parseMultiChar()
         if (result !== undefined) return result
+        result = this.parseType()
+        if (result !== undefined) return result
         result = this.parseSymbol()
         if (result !== undefined) return result
         throw Error(`Error lexing at ${this.stringIndex}`)
@@ -109,12 +106,11 @@ class Tokenizer implements Iterable<Token> {
         switch(char) {
             case '{': return this.tokenFound(TokenType.SYM_LBRACE)
             case '}': return this.tokenFound(TokenType.SYM_RBRACE)
-            case '|': return this.tokenFound(TokenType.SYM_VBAR)
-            case '\\': return this.tokenFound(TokenType.SYM_SLASH)
             case '(': return this.tokenFound(TokenType.SYM_LPAREN)
             case ')': return this.tokenFound(TokenType.SYM_RPAREN)
             case ',': return this.tokenFound(TokenType.SYM_COMMA)
-            case ':': return this.tokenFound(TokenType.SYM_COLON)
+            case '=': return this.tokenFound(TokenType.SYM_EQUALS)
+            case '!': return this.tokenFound(TokenType.SYM_NOT)
             default: return this.tokenNotFound()
         }
     }
@@ -130,6 +126,18 @@ class Tokenizer implements Iterable<Token> {
             // @ts-ignore we can safely ignore since the conditional guarantees that tokenString is in multichars
             return this.tokenFound(Tokenizer.multiChars.get(tokenString))
         } else return this.tokenNotFound();
+    }
+
+    parseType(): (Token | undefined) {
+        if (this.peekMultiple(5) !== 'type[') {
+            return this.tokenNotFound()
+        }
+        let char = this.peekChar()
+        while (char !== ']') {
+            if (char === '') return this.tokenNotFound()
+            char = this.peekChar()
+        }
+        return this.tokenFound(TokenType.TYPE)
     }
 
     parseSymbol(): (Token | undefined) {
@@ -148,6 +156,18 @@ class Tokenizer implements Iterable<Token> {
 
     peekChar(): string {
         return (this.source.charAt(this.peekIndex++) ?? '')
+    }
+
+    peekMultiple(amount: number): string {
+        let multiPeek = ''
+        let length = 0
+        let char = this.peekChar()
+        while (char !== '' && length < amount) {
+            multiPeek += char
+            char = this.peekChar()
+            length++
+        }
+        return multiPeek
     }
 
     unpeekChar() {
@@ -182,7 +202,7 @@ class Token {
         readonly length: number
     ) {}
 
-    public toString(): string {
+    toString(): string {
         return `${TokenType[this.type]}: "${this.tokenString}" @${this.index} len=${this.length}"`
     }
 

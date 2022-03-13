@@ -1,12 +1,23 @@
-import Tokenizer, {Token} from './Tokenizer';
+import Tokenizer, {Token, TokenType} from './Tokenizer'
+import RollbackIterator from './RollbackIterator'
 
 abstract class SyntaxTreeVisitor {
 
     public abstract accept(node: AbstractSyntaxTreeNode): void;
 
 }
-
-
+//AbstractSyntaxTreeNode
+// | BranchNode
+//   | DefNode
+//   | FormulaNode
+//     | PredicateNode
+//     | NegationNode
+//     | BinaryConnectiveNode
+//     | EqualityNode
+//     | QuantifierNode
+// | TerminalNode
+//   | SymbolNode
+//   | TypeNode
 abstract class AbstractSyntaxTreeNode {
 
 
@@ -33,61 +44,64 @@ abstract class BranchNode extends AbstractSyntaxTreeNode {
 }
 
 class DefNode extends BranchNode {
-    protected constructor(
+    constructor(
         token: Token,
-        private readonly name: SymbolNode,
-        private readonly constraints: WhereNode,
-        //TODO variables node
+        private readonly type: TypeNode,
     ) {
         super(token);
     }
 }
-class ConstraintNode extends BranchNode {
-    protected constructor(token: Token) {
-        super(token);
-    }
-}
-class WhereNode extends BranchNode {
-    protected constructor(token: Token) {
-        super(token);
-    }
+class FormulaNode extends BranchNode {
 
-    protected override addChild(node: ConstraintNode) {
-        super.addChild(node);
-    }
 }
-class ParenthesesNode extends BranchNode {
-    protected constructor(token: Token) {
-        super(token);
-    }
-}
-class BracesNode extends BranchNode {
-    protected constructor(token: Token) {
-        super(token);
-    }
-}
-
 abstract class TerminalNode extends AbstractSyntaxTreeNode {
     protected constructor(token: Token) {
         super(token);
     }
 }
-
 class SymbolNode extends TerminalNode {
     protected constructor(token: Token) {
         super(token);
     }
 }
-
+class TypeNode extends TerminalNode {
+    constructor(token: Token) {
+        super(token);
+    }
+}
 
 class Parser {
 
-    constructor(private readonly tokenizer: Tokenizer) {}
+    private readonly tokenizer: RollbackIterator<Token>
+
+    constructor(tokenizer: Tokenizer) {
+        this.tokenizer = new RollbackIterator<Token>(tokenizer)
+    }
 
     parse(): void {
+
+        this.tokenizer.createRollbackPoint()
         for (const token of this.tokenizer) {
             console.log(`${token}`)
         }
+        this.tokenizer.rollback()
+
+        this.definition()
+    }
+
+    private definition(): void {
+        this.tokenizer.createRollbackPoint()
+        const defToken = this.tokenizer.next().value
+        if (defToken.type !== TokenType.KW_DEF) this.nonMatch()
+        const typeToken = this.tokenizer.next().value
+        if (typeToken.type !== TokenType.TYPE) this.nonMatch()
+
+        const defNode = new DefNode(defToken, new TypeNode(typeToken));
+        console.log(defNode)
+    }
+
+    private nonMatch(): void {
+        this.tokenizer.rollback()
     }
 
 }

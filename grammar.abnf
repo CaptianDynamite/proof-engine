@@ -1,8 +1,8 @@
 document = formula / definition
-definition = def type formula
+definition = "def" type "{" formula "}"
 
 
-type          = type[ .* ]
+type          = "type" "[" *1(VCHAR / WSP) "]"
 
 formula           = predicate
                     / equality
