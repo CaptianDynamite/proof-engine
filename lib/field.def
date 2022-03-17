@@ -1,8 +1,8 @@
 def type[field] {
     forall F type[set](F)
-    forall + type[F prod F => F](+)
-    forall * type[F prod F => F](*)
-    forall a in(F, a) forall b in(F, b) forall c in(F, c) (
+    and forall + type[F prod F => F](+)
+    and forall * type[F prod F => F](*)
+    and forall a in(F, a) forall b in(F, b) forall c in(F, c) (
         +(+(a, b), c) = +(a, +(b, c))
         and +(a, b) = +(b, a)
         and exists 0 in(F, 0) forall a in(F, a) +(a, 0) = +(0, a) = a

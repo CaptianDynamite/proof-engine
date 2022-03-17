@@ -21,7 +21,7 @@ abstract class SyntaxTreeVisitor {
 abstract class AbstractSyntaxTreeNode {
 
 
-    protected constructor(private readonly token: Token) {}
+    constructor(private readonly token: Token) {}
 
     public visit(visitor: SyntaxTreeVisitor): void {
         visitor.accept(this)
@@ -29,45 +29,95 @@ abstract class AbstractSyntaxTreeNode {
 
 }
 
-abstract class BranchNode extends AbstractSyntaxTreeNode {
-
-    private children: AbstractSyntaxTreeNode[]
-
-    protected constructor(token: Token) {
-        super(token);
-        this.children = []
-    }
-
-    protected addChild(node: AbstractSyntaxTreeNode) {
-        this.children.push(node)
+abstract class DocumentNode extends AbstractSyntaxTreeNode {
+    protected constructor(
+        token: Token
+    ) {
+        super(token)
     }
 }
 
-class DefNode extends BranchNode {
+class DefNode extends DocumentNode {
     constructor(
         token: Token,
         private readonly type: TypeNode,
+        private readonly formula: FormulaNode
     ) {
-        super(token);
+        super(token)
     }
 }
-class FormulaNode extends BranchNode {
+class FormulaNode extends DocumentNode {
+}
+class EqualNode extends FormulaNode {
+    constructor(
+        token: Token,
+        private readonly name: SymbolNode,
+        private readonly lhs: FormulaNode,
+        private readonly rhs: FormulaNode
+    ) {
+        super(token)
+    }
+}
+class NegationNode extends FormulaNode {
+    constructor(
+        token: Token,
+        private readonly formula: FormulaNode
+    ) {
+        super(token)
+    }
+}
+class BinaryNode extends FormulaNode {
+    constructor(
+        token: Token,
+        private readonly lhs: FormulaNode,
+        private readonly rhs: FormulaNode
+    ) {
+        super(token)
+    }
+}
+class AndNode extends BinaryNode {
+}
+class OrNode extends BinaryNode {
+}
+class ThenNode extends BinaryNode {
+}
+class BidirectionalNode extends BinaryNode {
+}
+class QuantifierNode extends FormulaNode {
+    constructor(
+        token: Token,
+        private readonly variable: VariableNode,
+        private readonly formula: FormulaNode
+    ) {
+        super(token)
+    }
+}
+class ForallNode extends QuantifierNode {
+}
+class ExistNode extends QuantifierNode {
+}
 
-}
-abstract class TerminalNode extends AbstractSyntaxTreeNode {
-    protected constructor(token: Token) {
-        super(token);
+class TermNode extends DocumentNode {
+    constructor(
+        token: Token,
+    ) {
+        super(token)
     }
 }
-class SymbolNode extends TerminalNode {
-    protected constructor(token: Token) {
-        super(token);
+class VariableNode extends TermNode {
+}
+class FunctionNode extends TermNode {
+    constructor(
+        token: Token,
+        private readonly terms: TermNode[]
+    ) {
+        super(token)
     }
 }
-class TypeNode extends TerminalNode {
-    constructor(token: Token) {
-        super(token);
-    }
+
+class SymbolNode extends AbstractSyntaxTreeNode {
+}
+class TypeNode extends AbstractSyntaxTreeNode {
 }
 
 class Parser {
@@ -89,20 +139,41 @@ class Parser {
         this.definition()
     }
 
-    private definition(): void {
+    private definition(): (DefNode | null) {
         this.tokenizer.createRollbackPoint()
+
         const defToken = this.tokenizer.next().value
-        if (defToken.type !== TokenType.KW_DEF) this.nonMatch()
+        if (defToken.type !== TokenType.KW_DEF) return this.nonMatch()
+
         const typeToken = this.tokenizer.next().value
-        if (typeToken.type !== TokenType.TYPE) this.nonMatch()
+        if (typeToken.type !== TokenType.TYPE) return this.nonMatch()
 
-        const defNode = new DefNode(defToken, new TypeNode(typeToken));
-        console.log(defNode)
+        const lBraceToken = this.tokenizer.next().value
+        if (lBraceToken.type !== TokenType.SYM_LBRACE) return this.nonMatch()
+
+        const formula = this.formula()
+        if (formula == null) return this.nonMatch()
+
+        const rBraceToken = this.tokenizer.next().value
+        if (rBraceToken.type !== TokenType.SYM_RBRACE) return this.nonMatch()
+
+        this.tokenizer.removeRollback()
+        return new DefNode(defToken, new TypeNode(typeToken), formula);
     }
 
-    private nonMatch(): void {
+    private formula(): (FormulaNode | null) {
+        this.tokenizer.createRollbackPoint()
+
+        this.tokenizer.removeRollback()
+        return null
+    }
+
+    private nonMatch(): null {
         this.tokenizer.rollback()
+        return null
     }
+
+
 
 }
 

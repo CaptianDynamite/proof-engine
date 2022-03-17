@@ -38,6 +38,10 @@ class RollbackIterator<T> implements Iterable<T> {
         this.currentIndex = rollback
     }
 
+    removeRollback(): void {
+        this.rollbacks.pop()
+    }
+
 }
 
 export default RollbackIterator

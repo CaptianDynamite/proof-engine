@@ -11,7 +11,7 @@ formula           = predicate
                     / quantifier formula
                     / "(" formula ")"
 negation          = "!" formula
-quantifier        = "forall" / "exist"
+quantifier        = "forall" / "exist" variable
 binary_connective = andor / (then / if)
 andor             = formula ("and" / "or") formula
 then              = formula "=>" formula
@@ -22,8 +22,8 @@ term       = variable / function
 equality   = term "=" term
 
 variable   = symbol
-function   = symbol "(" term_list ")"
-predicate  = (symbol / type) "(" term_list ")"
+function   = symbol "(" [term_list] ")"
+predicate  = type "(" [term_list] ")"
 term_list  = term *("," term)
 
 symbol     = *1(ALPHA / DIGIT / "+" / "-" / "*" / "/" / "^" / "_")
