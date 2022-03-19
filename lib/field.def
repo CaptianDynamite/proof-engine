@@ -2,16 +2,17 @@ def type[field] {
     forall F type[set](F)
     and forall + type[F prod F => F](+)
     and forall * type[F prod F => F](*)
-    and forall a in(F, a) forall b in(F, b) forall c in(F, c) (
+    and forall a in(F, a) and forall b in(F, b) and forall c in(F, c)
+    and (
         +(+(a, b), c) = +(a, +(b, c))
         and +(a, b) = +(b, a)
-        and exists 0 in(F, 0) forall a in(F, a) +(a, 0) = +(0, a) = a
-        and exists -a in(F, -a) +(-a, a) = +(a, -a) = 0
+        and exists 0 in(F, 0) and forall a in(F, a) and +(a, 0) = a and +(0, a) = a
+        and exists -a in(F, -a) and +(-a, a) = 0 and +(a, -a) = 0
         and *( *(a, b), c) = *(a, *(b, c))
         and *(a, b) = *(b, a)
-        and exists 1 in(F, 1) forall a in(F, a) *(1, a) = *(a, 1) = 1
-        and forall a in(\(F, {0}), a) exists a^-1 in(\(F, {0}), a^-1) *(a, a^-1) = *(a^-1, a) = 1
+        and exists 1 in(F, 1) and forall a in(F, a) and *(1, a) = a and *(a, 1) = a
+        and forall a in(\(F, {0}), a) and exists a^-1 in(\(F, {0}), a^-1) and *(a, a^-1) = 1 and *(a^-1, a) = 1
         and *(a, +(b, c)) = +(*(a, b), *(a, c))
-        <=> type[field]((F, +, *))
+        <=> type[field](F, +, *)
     )
 }

@@ -26,6 +26,8 @@ enum TokenType {
     KW_FORALL, KW_EXISTS,
     KW_AND, KW_OR,
 
+    KW_IN,
+
     SYM_COMMA, SYM_RIGHT_ARROW, SYM_BIDIRECTIONAL_ARROW,
     SYM_LPAREN, SYM_RPAREN, SYM_LBRACE, SYM_RBRACE,
     SYM_NOT, SYM_EQUALS,
@@ -48,11 +50,12 @@ class Tokenizer implements Iterable<Token> {
             ['exists', TokenType.KW_EXISTS],
             ['and', TokenType.KW_AND],
             ['or', TokenType.KW_OR],
+            ['in', TokenType.KW_IN],
             ['=>', TokenType.SYM_RIGHT_ARROW],
             ['<=>', TokenType.SYM_BIDIRECTIONAL_ARROW]
         ])
     private static readonly delimiters: string[] = [
-        ' ', '\n', '\t', ''
+        ' ', '\n', '\t', '(', ''
     ]
 
 

@@ -17,13 +17,14 @@ class RollbackIterator<T> implements Iterable<T> {
         let next: IteratorResult<T>;
         if (this.currentIndex < this.iteratedValues.length) { // @ts-ignore
             next = { value: this.iteratedValues[this.currentIndex], done: false}
+            this.currentIndex++
         }
         else {
             next = this.iterator.next()
-        }
-        if (!next.done) {
-            this.iteratedValues.push(next.value)
-            this.currentIndex++
+            if (!next.done) {
+                this.iteratedValues.push(next.value)
+                this.currentIndex++
+            }
         }
         return next
     }
@@ -40,6 +41,10 @@ class RollbackIterator<T> implements Iterable<T> {
 
     removeRollback(): void {
         this.rollbacks.pop()
+    }
+
+    moveBack(): void {
+        this.currentIndex--
     }
 
 }

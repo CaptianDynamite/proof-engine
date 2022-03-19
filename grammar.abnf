@@ -4,26 +4,31 @@ definition = "def" type "{" formula "}"
 
 type          = "type" "[" *1(VCHAR / WSP) "]"
 
-formula           = predicate
+formula           = binary_connective
                     / equality
                     / negation
-                    / binary_connective
+                    / predicate
                     / quantifier formula
                     / "(" formula ")"
 negation          = "!" formula
 quantifier        = "forall" / "exist" variable
 binary_connective = andor / (then / if)
-andor             = formula ("and" / "or") formula
-then              = formula "=>" formula
-iff               = formula "<=>" formula
+andor             = binary_lhs ("and" / "or") formula
+then              = binary_lhs "=>" formula
+iff               = binary_lhs "<=>" formula
+binary_lhs        = equality
+                    / negation
+                    / predicate
+                    / quantifier formula
+                    / "(" formula ")"
 
-term       = variable / function
+term       = function / variable
 
 equality   = term "=" term
 
 variable   = symbol
 function   = symbol "(" [term_list] ")"
-predicate  = type "(" [term_list] ")"
+predicate  = (type / in) "(" [term_list] ")"
 term_list  = term *("," term)
 
 symbol     = *1(ALPHA / DIGIT / "+" / "-" / "*" / "/" / "^" / "_")
